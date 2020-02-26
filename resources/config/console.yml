@@ -59,6 +59,11 @@ services:
             - '@locator.changed_files'
         tags:
             - { name: 'console.command' }
+    GrumPHP\Console\Command\Git\PrepareCommitMsgCommand:
+        arguments:
+            - '@config'
+        tags:
+            - { name: 'console.command' }
 
     #
     # Helper

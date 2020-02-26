@@ -23,6 +23,7 @@ class DeInitCommand extends Command
     protected static $hooks = [
         'pre-commit',
         'commit-msg',
+        'prepare-commit-msg',
     ];
 
     /**

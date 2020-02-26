@@ -172,7 +172,7 @@ abstract class AbstractE2ETestCase extends TestCase
     protected function ensureHooksExist(string $gitPath = null, string $containsPattern = '{grumphp}')
     {
         $gitPath = $gitPath ?: $this->rootDir;
-        $hooks = ['pre-commit', 'commit-msg'];
+        $hooks = ['pre-commit', 'commit-msg', 'prepare-commit-msg'];
         foreach ($hooks as $hook) {
             $hookFile = $gitPath.$this->useCorrectDirectorySeparator('/.git/hooks/'.$hook);
             $this->assertFileExists($hookFile);
