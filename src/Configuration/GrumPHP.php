@@ -39,6 +39,11 @@ class GrumPHP
         return $this->container->getParameter('git_hook_variables');
     }
 
+    public function getProjectDirRelativeToGitDir(): string
+    {
+        return $this->container->getParameter('project_dir_relative_to_git_dir');
+    }
+
     public function stopOnFailure(): bool
     {
         return (bool) $this->container->getParameter('stop_on_failure');
