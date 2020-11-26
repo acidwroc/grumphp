@@ -64,7 +64,9 @@ services:
             - { name: 'console.command' }
     GrumPHP\Console\Command\Git\PrepareCommitMsgCommand:
         arguments:
-            - '@config'
+            - '@GrumPHP\Util\Paths'
+            - '@grumphp.util.filesystem'
+            - '%issues%'
         tags:
             - { name: 'console.command' }
 

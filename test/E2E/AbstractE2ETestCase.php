@@ -65,6 +65,14 @@ abstract class AbstractE2ETestCase extends TestCase
         $this->runCommand('install git', $process);
     }
 
+    protected function checkoutGit(string $gitPath, string $branchName)
+    {
+        $process = new Process([
+            $this->executableFinder->find('git'), 'checkout', '-b', $branchName
+        ], $gitPath);
+        $this->runCommand('checkout git', $process);
+    }
+
     protected function initializeGitSubModule(string $gitPath, string $submodulePath): string
     {
         // Change permissions on windows before submodule can be added:

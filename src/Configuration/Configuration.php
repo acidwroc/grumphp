@@ -77,6 +77,9 @@ class Configuration implements ConfigurationInterface
         $parallel->canBeDisabled();
         $parallel->children()->booleanNode('fix_by_default')->defaultFalse();
 
+        $issues = $rootNode->children()->arrayNode('issues')->addDefaultsIfNotSet();
+        $issues->children()->variableNode('pattern')->defaultValue('^\S*?\/*([A-Z]+-[0-9]+)');
+
         // Dotenv
         $env = $rootNode->children()->arrayNode('environment');
         $env->addDefaultsIfNotSet();
