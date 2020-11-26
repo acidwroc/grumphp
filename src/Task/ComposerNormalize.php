@@ -2,12 +2,14 @@
 
 namespace GrumPHP\Task;
 
+use GrumPHP\Fixer\Provider\FixableProcessResultProvider;
 use GrumPHP\Runner\TaskResult;
 use GrumPHP\Runner\TaskResultInterface;
 use GrumPHP\Task\Context\ContextInterface;
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Process\Process;
 
 class ComposerNormalize extends AbstractExternalTask
 {
@@ -23,6 +25,7 @@ class ComposerNormalize extends AbstractExternalTask
             'indent_size' => null,
             'indent_style' => null,
             'no_update_lock' => true,
+            'use_standalone' => false,
             'verbose' => false,
         ]);
 
@@ -46,8 +49,9 @@ class ComposerNormalize extends AbstractExternalTask
             return TaskResult::createSkipped($this, $context);
         }
 
-        $arguments = $this->processBuilder->createArgumentsForCommand('composer');
-        $arguments->add('normalize');
+        $executable = $config['use_standalone'] ? 'composer-normalize' : 'composer';
+        $arguments = $this->processBuilder->createArgumentsForCommand($executable);
+        $arguments->addOptionalArgument('normalize', !$config['use_standalone']);
         $arguments->add('--dry-run');
 
         if ($config['indent_size'] !== null && $config['indent_style'] !== null) {
@@ -62,7 +66,13 @@ class ComposerNormalize extends AbstractExternalTask
         $process->run();
 
         if (!$process->isSuccessful()) {
-            return TaskResult::createFailed($this, $context, $this->formatter->format($process));
+            return FixableProcessResultProvider::provide(
+                TaskResult::createFailed($this, $context, $this->formatter->format($process)),
+                function () use ($arguments): Process {
+                    $arguments->removeElement('--dry-run');
+                    return $this->processBuilder->buildProcess($arguments);
+                }
+            );
         }
 
         return TaskResult::createPassed($this, $context);

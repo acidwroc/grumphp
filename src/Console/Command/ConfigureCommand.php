@@ -38,6 +38,7 @@ class ConfigureCommand extends Command
 
     /**
      * @var InputInterface
+     * @psalm-suppress PropertyNotSetInConstructor
      */
     protected $input;
 
@@ -55,9 +56,6 @@ class ConfigureCommand extends Command
         return self::COMMAND_NAME;
     }
 
-    /**
-     * Configure command.
-     */
     protected function configure(): void
     {
         $this->addOption(
@@ -74,9 +72,6 @@ class ConfigureCommand extends Command
         );
     }
 
-    /**
-     * @return int|void
-     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->input = $input;
@@ -144,7 +139,7 @@ class ConfigureCommand extends Command
 
         // Build configuration
         return [
-            'parameters' => [
+            'grumphp' => [
                 'tasks' => array_map(function ($task) {
                     return null;
                 }, array_flip($tasks)),

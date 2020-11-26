@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace GrumPHP\Task;
 
-use GrumPHP\Configuration\GrumPHP;
 use GrumPHP\Formatter\ProcessFormatterInterface;
 use GrumPHP\Process\ProcessBuilder;
 use GrumPHP\Runner\TaskResult;
@@ -18,6 +17,9 @@ use SplFileInfo;
 
 class Composer extends AbstractExternalTask
 {
+    /**
+     * @var Filesystem
+     */
     private $filesystem;
 
     public function __construct(
@@ -85,7 +87,8 @@ class Composer extends AbstractExternalTask
             return TaskResult::createFailed($this, $context, $this->formatter->format($process));
         }
 
-        if ($config['no_local_repository'] && $this->hasLocalRepository($files->first())) {
+        $composerFile = $files->first();
+        if ($config['no_local_repository'] && $composerFile && $this->hasLocalRepository($composerFile)) {
             return TaskResult::createFailed($this, $context, 'You have at least one local repository declared.');
         }
 

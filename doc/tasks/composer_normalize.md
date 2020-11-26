@@ -1,4 +1,4 @@
-# Composer Normalize
+# Composer Normalize ![fixer](https://img.shields.io/badge/-fixer-informational)
 
 If you are using `composer`, you have probably modified the file `composer.json` at least once to keep things nice
 and tidy.
@@ -17,7 +17,7 @@ The default configuration looks like:
 
 ```yaml
 # grumphp.yml
-parameters:
+grumphp:
     tasks:
         composer_normalize:
             indent_size: ~
@@ -43,6 +43,12 @@ Indent style (one of "space", "tab"); must be used with the `indent_size` option
 *Default: true*
 
 If `false`, do not update lock file if it exists.
+
+**use_standalone**
+
+*Default: false*
+
+If `true`, use the standalone `composer-normalize` command instead of the Composer plugin.
 
 **verbose**
 

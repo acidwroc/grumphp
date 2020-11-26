@@ -18,6 +18,9 @@ final class ContainerBuilder
         $filesystem = new Filesystem();
         $container = new SymfonyContainerBuilder();
 
+        // Register extensions
+        $container->registerExtension(new GrumPHPExtension());
+
         // Add compiler passes:
         $container->addCompilerPass(new Compiler\ExtensionCompilerPass());
         $container->addCompilerPass(new Compiler\PhpParserCompilerPass());
@@ -31,12 +34,14 @@ final class ContainerBuilder
         // Load basic service file + custom user configuration
         $configDir = dirname(__DIR__, 2).$filesystem->ensureValidSlashes('/resources/config');
         $loader = new YamlFileLoader($container, new FileLocator($configDir));
+        $loader->load('config.yml');
         $loader->load('console.yml');
+        $loader->load('fixer.yml');
         $loader->load('formatter.yml');
         $loader->load('linters.yml');
         $loader->load('locators.yml');
-        $loader->load('parameters.yml');
         $loader->load('parsers.yml');
+        $loader->load('runner.yml');
         $loader->load('services.yml');
         $loader->load('subscribers.yml');
         $loader->load('tasks.yml');

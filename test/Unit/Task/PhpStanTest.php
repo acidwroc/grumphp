@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GrumPHPTest\Uni\Task;
+namespace GrumPHPTest\Unit\Task;
 
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
@@ -27,12 +27,13 @@ class PhpStanTest extends AbstractExternalTaskTestCase
             [
                 'autoload_file' => null,
                 'configuration' => null,
-                'level' => 0,
+                'level' => null,
                 'ignore_patterns' => [],
                 'force_patterns' => [],
                 'triggered_by' => ['php'],
-                'memory_limit' => null
-            ]
+                'memory_limit' => null,
+                'use_grumphp_paths' => true,
+            ],
         ];
     }
 
@@ -117,7 +118,6 @@ class PhpStanTest extends AbstractExternalTaskTestCase
             'phpstan',
             [
                 'analyse',
-                '--level=0',
                 '--no-ansi',
                 '--no-interaction',
                 '--no-progress',
@@ -134,7 +134,6 @@ class PhpStanTest extends AbstractExternalTaskTestCase
             [
                 'analyse',
                 '--autoload-file=autoload.php',
-                '--level=0',
                 '--no-ansi',
                 '--no-interaction',
                 '--no-progress',
@@ -151,7 +150,6 @@ class PhpStanTest extends AbstractExternalTaskTestCase
             [
                 'analyse',
                 '--configuration=configurationfile',
-                '--level=0',
                 '--no-ansi',
                 '--no-interaction',
                 '--no-progress',
@@ -168,7 +166,6 @@ class PhpStanTest extends AbstractExternalTaskTestCase
             [
                 'analyse',
                 '--memory-limit=250MB',
-                '--level=0',
                 '--no-ansi',
                 '--no-interaction',
                 '--no-progress',
@@ -192,12 +189,18 @@ class PhpStanTest extends AbstractExternalTaskTestCase
                 'hello2.php',
             ]
         ];
-
-        /*
-         *         $arguments->addOptionalArgument('--autoload-file=%s', $config['autoload_file']);
-        $arguments->addOptionalArgument('--configuration=%s', $config['configuration']);
-        $arguments->addOptionalArgument('--memory-limit=%s', $config['memory_limit']);
-        $arguments->addOptionalMixedArgument('--level=%s', $config['level']);
-         */
+        yield 'no_files' => [
+            [
+                'use_grumphp_paths' => false,
+            ],
+            $this->mockContext(RunContext::class, ['hello.php', 'hello2.php']),
+            'phpstan',
+            [
+                'analyse',
+                '--no-ansi',
+                '--no-interaction',
+                '--no-progress',
+            ]
+        ];
     }
 }

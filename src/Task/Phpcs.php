@@ -5,16 +5,25 @@ declare(strict_types=1);
 namespace GrumPHP\Task;
 
 use GrumPHP\Collection\ProcessArgumentsCollection;
+use GrumPHP\Fixer\Provider\FixableProcessResultProvider;
+use GrumPHP\Formatter\PhpcsFormatter;
+use GrumPHP\Process\TmpFileUsingProcessRunner;
 use GrumPHP\Runner\TaskResult;
 use GrumPHP\Runner\TaskResultInterface;
 use GrumPHP\Task\Context\ContextInterface;
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
-use RuntimeException;
+use Symfony\Component\Console\Exception\CommandNotFoundException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Process\Process;
 
 class Phpcs extends AbstractExternalTask
 {
+    /**
+     * @var PhpcsFormatter
+     */
+    protected $formatter;
+
     public static function getConfigurableOptions(): OptionsResolver
     {
         $resolver = new OptionsResolver();
@@ -60,47 +69,74 @@ class Phpcs extends AbstractExternalTask
     {
         /** @var array $config */
         $config = $this->getConfig()->getOptions();
-        /** @var array $whitelistPatterns */
-        $whitelistPatterns = $config['whitelist_patterns'];
-        /** @var array $extensions */
-        $extensions = $config['triggered_by'];
 
-        /** @var \GrumPHP\Collection\FilesCollection $files */
-        $files = $context->getFiles();
-        if (\count($whitelistPatterns)) {
-            $files = $files->paths($whitelistPatterns);
-        }
-        $files = $files->extensions($extensions);
+        $files = $context->getFiles()
+            ->extensions($config['triggered_by'])
+            ->paths($config['whitelist_patterns'] ?? [])
+            ->notPaths($config['ignore_patterns'] ?? []);
 
         if (0 === \count($files)) {
             return TaskResult::createSkipped($this, $context);
         }
 
-        $arguments = $this->processBuilder->createArgumentsForCommand('phpcs');
-        $arguments = $this->addArgumentsFromConfig($arguments, $config);
-        $arguments->add('--report-json');
-        $arguments->addFiles($files);
+        $process = TmpFileUsingProcessRunner::run(
+            function (string $tmpFile) use ($config): Process {
+                $arguments = $this->processBuilder->createArgumentsForCommand('phpcs');
+                $arguments = $this->addArgumentsFromConfig($arguments, $config);
+                $arguments->add('--report-json');
+                $arguments->add('--file-list='.$tmpFile);
 
-        $process = $this->processBuilder->buildProcess($arguments);
-        $process->run();
+                return $this->processBuilder->buildProcess($arguments);
+            },
+            static function () use ($files): \Generator {
+                yield $files->toFileList();
+            }
+        );
 
         if (!$process->isSuccessful()) {
-            $output = $this->formatter->format($process);
+            $failedResult = TaskResult::createFailed($this, $context, $this->formatter->format($process));
+
             try {
-                $arguments = $this->processBuilder->createArgumentsForCommand('phpcbf');
-                $arguments = $this->addArgumentsFromConfig($arguments, $config);
-                $output .= $this->formatter->formatErrorMessage($arguments, $this->processBuilder);
-            } catch (RuntimeException $exception) { // phpcbf could not get found.
-                $output .= PHP_EOL.'Info: phpcbf could not get found. Please consider to install it for suggestions.';
+                $fixerProcess = $this->createFixerProcess($this->formatter->getSuggestedFiles());
+            } catch (CommandNotFoundException $e) {
+                return $failedResult->withAppendedMessage(
+                    PHP_EOL.'Info: phpcbf could not be found. Please consider to install it for auto-fixing.'
+                );
             }
 
-            return TaskResult::createFailed($this, $context, $output);
+            if ($fixerProcess) {
+                return FixableProcessResultProvider::provide(
+                    $failedResult,
+                    function () use ($fixerProcess): Process {
+                        return $fixerProcess;
+                    },
+                    [0, 1]
+                );
+            }
+
+            return $failedResult;
         }
 
         return TaskResult::createPassed($this, $context);
     }
 
-    protected function addArgumentsFromConfig(
+    /**
+     * @param array<int, string> $suggestedFiles
+     */
+    private function createFixerProcess(array $suggestedFiles): ?Process
+    {
+        if (!$suggestedFiles) {
+            return null;
+        }
+
+        $arguments = $this->processBuilder->createArgumentsForCommand('phpcbf');
+        $arguments = $this->addArgumentsFromConfig($arguments, $this->config->getOptions());
+        $arguments->addArgumentArray('%s', $suggestedFiles);
+
+        return $this->processBuilder->buildProcess($arguments);
+    }
+
+    private function addArgumentsFromConfig(
         ProcessArgumentsCollection $arguments,
         array $config
     ): ProcessArgumentsCollection {

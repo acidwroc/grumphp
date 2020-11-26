@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace GrumPHPTest\Uni\Task;
+namespace GrumPHPTest\Unit\Task;
 
+use GrumPHP\Runner\FixableTaskResult;
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
 use GrumPHP\Task\ComposerNormalize;
@@ -25,6 +26,7 @@ class ComposerNormalizeTest extends AbstractExternalTaskTestCase
         yield 'defaults' => [
             [],
             [
+                'use_standalone' => false,
                 'indent_size' => null,
                 'indent_style' => null,
                 'no_update_lock' => true,
@@ -60,7 +62,8 @@ class ComposerNormalizeTest extends AbstractExternalTaskTestCase
                 $this->mockProcessBuilder('composer', $process = $this->mockProcess(1));
                 $this->formatter->format($process)->willReturn('nope');
             },
-            'nope'
+            'nope',
+            FixableTaskResult::class
         ];
     }
 
@@ -162,6 +165,17 @@ class ComposerNormalizeTest extends AbstractExternalTaskTestCase
                 '--dry-run',
                 '--no-update-lock',
                 '-q'
+            ]
+        ];
+        yield 'use_standalone' => [
+            [
+                'use_standalone' => true,
+            ],
+            $this->mockContext(RunContext::class, ['composer.json', 'hello2.php']),
+            'composer-normalize',
+            [
+                '--dry-run',
+                '--no-update-lock',
             ]
         ];
     }

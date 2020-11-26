@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GrumPHPTest\Uni\Task;
+namespace GrumPHPTest\Unit\Task;
 
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
@@ -29,6 +29,7 @@ class TwigCsTest extends AbstractExternalTaskTestCase
                 'severity' => 'warning',
                 'ruleset' => 'FriendsOfTwig\Twigcs\Ruleset\Official',
                 'triggered_by' => ['twig'],
+                'exclude' => [],
             ]
         ];
     }
@@ -114,6 +115,22 @@ class TwigCsTest extends AbstractExternalTaskTestCase
                 '--severity=warning',
                 '--ruleset=FriendsOfTwig\Twigcs\Ruleset\Official',
                 '--ansi',
+            ]
+        ];
+
+        yield 'exclude' => [
+            [
+                'exclude' => ['src/', 'test/', null, '', false],
+            ],
+            $this->mockContext(RunContext::class, ['hello.twig', 'hello2.twig']),
+            'twigcs',
+            [
+                '.',
+                '--severity=warning',
+                '--ruleset=FriendsOfTwig\Twigcs\Ruleset\Official',
+                '--ansi',
+                '--exclude=src/',
+                '--exclude=test/',
             ]
         ];
     }

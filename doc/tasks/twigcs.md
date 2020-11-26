@@ -5,7 +5,7 @@ Check Twig coding standard based on [FriendsOfTwig/TwigCs](https://github.com/Fr
 ***Composer***
 
 ```
-composer require --dev friendsoftwig/twigcs
+composer require --dev "friendsoftwig/twigcs:>=4"
 ```
 
 ***Config***
@@ -14,13 +14,14 @@ The task lives under the `twigcs` namespace and has following configurable param
 
 ```yaml
 # grumphp.yml
-parameters:
+grumphp:
     tasks:
         twigcs:
             path: '.'
             severity: 'warning'
             ruleset: 'FriendsOfTwig\Twigcs\Ruleset\Official'
             triggered_by: ['twig']
+            exclude: []
 ```
 
 **path**
@@ -47,3 +48,9 @@ Ruleset used, default ruleset is based on [official one from twig](https://twig.
 *Default: [twig]*
 
 This option will specify which file extensions will trigger this task.
+
+**exclude**
+
+*Default: []*
+
+This option will specify which relative subfolders or files will be exclude to this task.

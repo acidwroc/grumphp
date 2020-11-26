@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GrumPHPTest\Uni\Task;
+namespace GrumPHPTest\Unit\Task;
 
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
@@ -27,6 +27,7 @@ class PhpMdTest extends AbstractExternalTaskTestCase
             [
                 'whitelist_patterns' => [],
                 'exclude' => [],
+                'report_format' => 'text',
                 'ruleset' => ['cleancode', 'codesize', 'naming'],
                 'triggered_by' => ['php'],
             ]
@@ -141,6 +142,19 @@ class PhpMdTest extends AbstractExternalTaskTestCase
                 'hello.php,hello2.php',
                 'text',
                 'cleancode',
+            ]
+        ];
+
+        yield 'report_formats' => [
+            [
+                'report_format' => 'ansi',
+            ],
+            $this->mockContext(RunContext::class, ['hello.php', 'hello2.php']),
+            'phpmd',
+            [
+                'hello.php,hello2.php',
+                'ansi',
+                'cleancode,codesize,naming',
             ]
         ];
     }
