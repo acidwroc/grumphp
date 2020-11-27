@@ -105,6 +105,8 @@ class PrepareCommitMsgCommand extends Command
 
     private function appendIssueToCommitMsg(string $inputPath, string $outputPath, string $issue): void
     {
+        chmod($inputPath, 0777);
+
         $input = fopen($inputPath, 'r');
         $output = fopen($outputPath, 'w+');
         $index = 0;
@@ -128,5 +130,6 @@ class PrepareCommitMsgCommand extends Command
     {
         unlink($inputPath);
         rename($outputPath, $inputPath);
+        chmod($inputPath, 0777);
     }
 }
