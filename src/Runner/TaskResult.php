@@ -7,13 +7,11 @@ namespace GrumPHP\Runner;
 use GrumPHP\Task\Context\ContextInterface;
 use GrumPHP\Task\TaskInterface;
 
+/**
+ * @psalm-readonly
+ */
 class TaskResult implements TaskResultInterface
 {
-    const SKIPPED = -100;
-    const PASSED = 0;
-    const NONBLOCKING_FAILED = 90;
-    const FAILED = 99;
-
     private $resultCode;
     private $task;
     private $context;
@@ -69,17 +67,22 @@ class TaskResult implements TaskResultInterface
 
     public function isPassed(): bool
     {
-        return self::PASSED === $this->getResultCode();
+        return self::PASSED === $this->resultCode;
     }
 
     public function hasFailed(): bool
     {
-        return self::FAILED === $this->getResultCode() || self::NONBLOCKING_FAILED === $this->getResultCode();
+        return self::FAILED === $this->resultCode || self::NONBLOCKING_FAILED === $this->resultCode;
+    }
+
+    public function isSkipped(): bool
+    {
+        return $this->resultCode === self::SKIPPED;
     }
 
     public function isBlocking(): bool
     {
-        return $this->getResultCode() >= self::FAILED;
+        return $this->resultCode >= self::FAILED;
     }
 
     public function getMessage(): string
@@ -90,5 +93,13 @@ class TaskResult implements TaskResultInterface
     public function getContext(): ContextInterface
     {
         return $this->context;
+    }
+
+    public function withAppendedMessage(string $additionalMessage): TaskResultInterface
+    {
+        $new = clone $this;
+        $new->message = $this->message . $additionalMessage;
+
+        return $new;
     }
 }

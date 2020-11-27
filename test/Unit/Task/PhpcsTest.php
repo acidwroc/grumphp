@@ -2,17 +2,18 @@
 
 declare(strict_types=1);
 
-namespace GrumPHPTest\Uni\Task;
+namespace GrumPHPTest\Unit\Task;
 
 use GrumPHP\Collection\ProcessArgumentsCollection;
-use GrumPHP\Exception\RuntimeException;
 use GrumPHP\Formatter\PhpcsFormatter;
+use GrumPHP\Runner\FixableTaskResult;
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
 use GrumPHP\Task\Phpcs;
 use GrumPHP\Task\TaskInterface;
 use GrumPHP\Test\Task\AbstractExternalTaskTestCase;
 use Prophecy\Prophecy\ObjectProphecy;
+use Symfony\Component\Console\Exception\CommandNotFoundException;
 
 class PhpcsTest extends AbstractExternalTaskTestCase
 {
@@ -77,10 +78,26 @@ class PhpcsTest extends AbstractExternalTaskTestCase
             $this->mockContext(RunContext::class, ['hello.php']),
             function () {
                 $this->mockProcessBuilder('phpcs', $process = $this->mockProcess(1));
-                $this->processBuilder->createArgumentsForCommand('phpcbf')->willThrow(RuntimeException::class);
-                $this->formatter->format($process)->willReturn('nope');
+                $this->processBuilder->createArgumentsForCommand('phpcbf')->willThrow(CommandNotFoundException::class);
+                $this->formatter->format($process)->will(function () {
+                    $this->getSuggestedFiles()->willReturn(['hello.php']);
+                    return 'nope';
+                });
             },
-            'nope'.PHP_EOL.'Info: phpcbf could not get found. Please consider to install it for suggestions.'
+            'nope'.PHP_EOL.'Info: phpcbf could not be found. Please consider to install it for auto-fixing'
+        ];
+        yield 'exitCode1WithoutFixerBecauseOfNoFiles' => [
+            [],
+            $this->mockContext(RunContext::class, ['hello.php']),
+            function () {
+                $this->mockProcessBuilder('phpcs', $process = $this->mockProcess(1));
+                $this->processBuilder->createArgumentsForCommand('phpcbf')->shouldNotBeCalled();
+                $this->formatter->format($process)->will(function () {
+                    $this->getSuggestedFiles()->willReturn([]);
+                    return 'nope';
+                });
+            },
+            'nope'
         ];
         yield 'exitCode1WithFixer' => [
             [],
@@ -88,13 +105,17 @@ class PhpcsTest extends AbstractExternalTaskTestCase
             function () {
                 $this->mockProcessBuilder('phpcs', $process = $this->mockProcess(1));
                 $this->processBuilder->createArgumentsForCommand('phpcbf')->willReturn(
-                    $fixerArguments = new ProcessArgumentsCollection()
+                    $fixerArguments = new ProcessArgumentsCollection(['phpcbf'])
                 );
+                $this->processBuilder->buildProcess($fixerArguments)->willReturn($phpcbdProcess = $this->mockProcess(0));
 
-                $this->formatter->format($process)->willReturn('nope');
-                $this->formatter->formatErrorMessage($fixerArguments, $this->processBuilder)->willReturn('fixer');
+                $this->formatter->format($process)->will(function (): string {
+                    $this->getSuggestedFiles()->willReturn(['hello.php']);
+                    return 'nope';
+                });
             },
-            'nopefixer'
+            'nope',
+            FixableTaskResult::class
         ];
     }
 
@@ -140,8 +161,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--extensions=php',
                 '--report=full',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'standard' => [
@@ -155,8 +175,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--extensions=php',
                 '--report=full',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'extensions' => [
@@ -169,8 +188,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--extensions=php,phtml',
                 '--report=full',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'tab-width' => [
@@ -184,8 +202,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--tab-width=4',
                 '--report=full',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'encoding' => [
@@ -199,8 +216,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--encoding=UTF-8',
                 '--report=full',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'report' => [
@@ -213,8 +229,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--extensions=php',
                 '--report=small',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'report-width' => [
@@ -228,8 +243,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--report=full',
                 '--report-width=20',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'severity' => [
@@ -243,8 +257,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--report=full',
                 '--severity=5',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'error-severity' => [
@@ -258,8 +271,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--report=full',
                 '--error-severity=5',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'warning-severity' => [
@@ -273,8 +285,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--report=full',
                 '--warning-severity=5',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'sniffs' => [
@@ -288,8 +299,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--report=full',
                 '--sniffs=sniff1,sniff2',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'ignore-patternes' => [
@@ -303,8 +313,7 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--report=full',
                 '--ignore=ignore1,ignore2',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
         yield 'exclude' => [
@@ -318,9 +327,21 @@ class PhpcsTest extends AbstractExternalTaskTestCase
                 '--report=full',
                 '--exclude=exclude1,exclude2',
                 '--report-json',
-                'hello.php',
-                'hello2.php',
+                $this->expectFileList('hello.php'.PHP_EOL.'hello2.php'),
             ]
         ];
+    }
+
+    private function expectFileList(string $expectedContents): callable
+    {
+        return static function (string $argument) use ($expectedContents) {
+            self::assertStringStartsWith('--file-list=', $argument);
+            list($arg, $tmpFile) = explode('=', $argument, 2);
+
+            self::assertFileExists($tmpFile);
+            self::assertStringEqualsFile($tmpFile, 'hello.php'.PHP_EOL.'hello2.php');
+
+            return $argument;
+        };
     }
 }

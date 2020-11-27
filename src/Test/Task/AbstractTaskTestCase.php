@@ -6,18 +6,22 @@ namespace GrumPHP\Test\Task;
 
 use GrumPHP\Collection\FilesCollection;
 use GrumPHP\Runner\TaskResult;
+use GrumPHP\Runner\TaskResultInterface;
 use GrumPHP\Task\Config\EmptyTaskConfig;
 use GrumPHP\Task\Config\Metadata;
 use GrumPHP\Task\Config\TaskConfig;
 use GrumPHP\Task\Context\ContextInterface;
 use GrumPHP\Task\TaskInterface;
 use PHPUnit\Framework\TestCase;
+use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\OptionsResolver\Exception\ExceptionInterface;
 
 abstract class AbstractTaskTestCase extends TestCase
 {
+    use ProphecyTrait;
+
     /**
      * @var TaskInterface
      */
@@ -30,7 +34,7 @@ abstract class AbstractTaskTestCase extends TestCase
     abstract public function providePassesOnStuff(): iterable;
     abstract public function provideSkipsOnStuff(): iterable;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->task = $this->provideTask();
@@ -91,13 +95,15 @@ abstract class AbstractTaskTestCase extends TestCase
         array $config,
         ContextInterface $context,
         callable $configurator,
-        string $expectedErrorMessage
+        string $expectedErrorMessage,
+        string $resultClass = TaskResult::class
     ): void {
         $task = $this->configureTask($config);
         \Closure::bind($configurator, $this)($task->getConfig()->getOptions(), $context);
 
         $result = $task->run($context);
-        self::assertInstanceOf(TaskResult::class, $result);
+
+        self::assertInstanceOf($resultClass, $result);
         self::assertSame(TaskResult::FAILED, $result->getResultCode());
         self::assertSame($task, $result->getTask());
         self::assertSame($context, $result->getContext());

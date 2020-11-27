@@ -8,6 +8,9 @@ use Doctrine\Common\Collections\ArrayCollection;
 use GrumPHP\Runner\TaskResult;
 use GrumPHP\Runner\TaskResultInterface;
 
+/**
+ * @extends ArrayCollection<int, TaskResultInterface>
+ */
 class TaskResultCollection extends ArrayCollection
 {
     const NO_TASKS = -100;
@@ -40,17 +43,23 @@ class TaskResultCollection extends ArrayCollection
 
     public function filterByResultCode(int $resultCode): self
     {
-        return $this->filter(function (TaskResultInterface $taskResult) use ($resultCode) {
+        return $this->filter(function (TaskResultInterface $taskResult) use ($resultCode): bool {
             return $resultCode === $taskResult->getResultCode();
         });
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function getAllMessages(): array
     {
         $messages = [];
 
+        /** @var TaskResultInterface $taskResult */
         foreach ($this as $taskResult) {
-            $messages[] = $taskResult->getMessage();
+            $config = $taskResult->getTask()->getConfig();
+            $label = $config->getMetadata()->label() ?: $config->getName();
+            $messages[$label] = $taskResult->getMessage();
         }
 
         return $messages;

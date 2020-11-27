@@ -65,6 +65,14 @@ abstract class AbstractE2ETestCase extends TestCase
         $this->runCommand('install git', $process);
     }
 
+    protected function checkoutGit(string $gitPath, string $branchName)
+    {
+        $process = new Process([
+            $this->executableFinder->find('git'), 'checkout', '-b', $branchName
+        ], $gitPath);
+        $this->runCommand('checkout git', $process);
+    }
+
     protected function initializeGitSubModule(string $gitPath, string $submodulePath): string
     {
         // Change permissions on windows before submodule can be added:
@@ -95,7 +103,7 @@ abstract class AbstractE2ETestCase extends TestCase
     {
         $process = new Process(
             [
-                $this->executableFinder->find('composer'),
+                realpath($this->executableFinder->find('composer', 'composer')),
                 'init',
                 '--name=grumphp/testsuite'.$this->hash,
                 '--type=library',
@@ -176,7 +184,7 @@ abstract class AbstractE2ETestCase extends TestCase
         foreach ($hooks as $hook) {
             $hookFile = $gitPath.$this->useCorrectDirectorySeparator('/.git/hooks/'.$hook);
             $this->assertFileExists($hookFile);
-            $this->assertRegExp(
+            $this->assertMatchesRegularExpression(
                 $containsPattern,
                 file_get_contents($hookFile),
                 $hookFile.' does not contain '.$containsPattern
@@ -191,7 +199,7 @@ abstract class AbstractE2ETestCase extends TestCase
         $this->filesystem->dumpFile(
             $grumphpFile,
             Yaml::dump([
-                'parameters' => [
+                'grumphp' => [
                     'tasks' => []
                 ]
             ])
@@ -262,7 +270,7 @@ abstract class AbstractE2ETestCase extends TestCase
         $taskName = array_key_exists('task', $metadata) ? 'dummyTaskName' : 'validatePaths';
 
         $this->mergeGrumphpConfig($grumphpFile, [
-            'parameters' => [
+            'grumphp' => [
                 'tasks' => [
                     $taskName => [
                         'metadata' => $metadata
@@ -290,7 +298,7 @@ abstract class AbstractE2ETestCase extends TestCase
         $process = new Process(
             array_merge(
                 [
-                    $this->executableFinder->find('composer'),
+                    realpath($this->executableFinder->find('composer', 'composer')),
                     'install',
                     '--optimize-autoloader',
                     '--no-interaction',
@@ -397,7 +405,14 @@ abstract class AbstractE2ETestCase extends TestCase
 
     protected function runCommand(string $action, Process $process)
     {
-        $process->inheritEnvironmentVariables(true);
+        /*
+         * Method is removed in symfony/process:5.0
+         * Still required in older symfony versions though (3.4 -> 4.4)
+         */
+        if (method_exists($process, 'inheritEnvironmentVariables')) {
+            $process->inheritEnvironmentVariables(true);
+        }
+
         $process->run();
         if (!$process->isSuccessful()) {
             throw new \RuntimeException(

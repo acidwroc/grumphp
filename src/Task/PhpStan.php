@@ -22,25 +22,33 @@ class PhpStan extends AbstractExternalTask
         $resolver->setDefaults([
             'autoload_file' => null,
             'configuration' => null,
-            'level' => 0,
+            'level' => null,
             'ignore_patterns' => [],
             'force_patterns' => [],
             'triggered_by' => ['php'],
-            'memory_limit' => null
+            'memory_limit' => null,
+            'use_grumphp_paths' => true,
         ]);
 
         $resolver->addAllowedTypes('autoload_file', ['null', 'string']);
         $resolver->addAllowedTypes('configuration', ['null', 'string']);
         $resolver->addAllowedTypes('memory_limit', ['null', 'string']);
-        $resolver->setAllowedValues('level', function ($value) {
-            if ($value === null || $value === 'max') {
-                return true;
+        $resolver->setAllowedValues(
+            'level',
+            /**
+             * @param null|string|int $value
+             */
+            function ($value) {
+                if ($value === null || $value === 'max') {
+                    return true;
+                }
+                return false !== filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
             }
-            return false !== filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
-        });
+        );
         $resolver->addAllowedTypes('ignore_patterns', ['array']);
         $resolver->addAllowedTypes('force_patterns', ['array']);
         $resolver->addAllowedTypes('triggered_by', ['array']);
+        $resolver->addAllowedTypes('use_grumphp_paths', ['bool']);
 
         return $resolver;
     }
@@ -84,7 +92,10 @@ class PhpStan extends AbstractExternalTask
         $arguments->add('--no-ansi');
         $arguments->add('--no-interaction');
         $arguments->add('--no-progress');
-        $arguments->addFiles($files);
+
+        if ($config['use_grumphp_paths']) {
+            $arguments->addFiles($files);
+        }
 
         $process = $this->processBuilder->buildProcess($arguments);
 

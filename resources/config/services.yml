@@ -1,22 +1,11 @@
 services:
-    async_process_runner:
-      class: GrumPHP\Process\AsyncProcessRunner
-      arguments:
-        - '@config'
-
-    config:
-        class: GrumPHP\Configuration\GrumPHP
-        arguments:
-          - '@service_container'
-          - '@GrumPHP\Configuration\GuessedPaths'
-        public: true
-
     GrumPHP\Configuration\GuessedPaths:
         class: GrumPHP\Configuration\GuessedPaths
         synthetic: true
         public: true
 
     Symfony\Component\EventDispatcher\EventDispatcher: ~
+    event_dispatcher: '@Symfony\Component\EventDispatcher\EventDispatcher'
     GrumPHP\Event\Dispatcher\Bridge\SymfonyEventDispatcher:
         arguments:
             - '@Symfony\Component\EventDispatcher\EventDispatcher'
@@ -28,42 +17,28 @@ services:
     filesystem:
         alias: grumphp.util.filesystem
 
-    GrumPHP\Configuration\Configurator\ExecutableFinderConfigurator:
-        arguments:
-            - '@GrumPHP\Util\Paths'
     executable_finder:
         class: Symfony\Component\Process\ExecutableFinder
-        configurator: ['@GrumPHP\Configuration\Configurator\ExecutableFinderConfigurator', 'configure']
         calls:
             - { method: 'setSuffixes', arguments: [['.phar', '.exe', '.bat', '.cmd', '.com']] }
 
     process_builder:
       class: GrumPHP\Process\ProcessBuilder
       arguments:
-        - '@config'
-        - '@locator.external_command'
+        - '@GrumPHP\Locator\ExternalCommand'
         - '@grumphp.io'
+        - '@GrumPHP\Configuration\Model\ProcessConfig'
       public: true
 
     GrumPHP\Git\GitRepository:
         arguments:
             - '@GrumPHP\Locator\GitRepositoryLocator'
-            - { logger: '@grumphp.logger' }
-
-    task_runner:
-        class: GrumPHP\Runner\TaskRunner
-        arguments:
-          - '@GrumPHP\Collection\TasksCollection'
-          - '@config'
-          - '@GrumPHP\Event\Dispatcher\EventDispatcherInterface'
-        public: true
+            -
+                logger: '@grumphp.logger'
+                inherit_environment_variables: true
 
     grumphp.io:
         alias: grumphp.io.console
-
-    grumphp.io.null:
-        class: GrumPHP\IO\NullIO
-        public: false
 
     grumphp.io.console:
         class: GrumPHP\IO\ConsoleIO
@@ -97,4 +72,3 @@ services:
         class: Seld\JsonLint\JsonParser
 
     GrumPHP\Configuration\Configurator\TaskConfigurator: ~
-    GrumPHP\Collection\TasksCollection: ~

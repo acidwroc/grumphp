@@ -5,7 +5,7 @@ To activate a task, it is sufficient to add an empty task configuration:
 
 ```yaml
 # grumphp.yml
-parameters:
+grumphp:
     tasks:
         ant: ~
         atoum: ~
@@ -20,6 +20,7 @@ parameters:
         deptrac: ~
         doctrine_orm: ~
         ecs: ~
+        eslint: ~
         file_size: ~
         gherkin: ~
         git_blacklist: ~
@@ -33,13 +34,13 @@ parameters:
         make: ~
         npm_script: ~
         paratest: ~
+        pest: ~
         phan: ~        
         phing: ~
         php7cc: ~
         phpcpd: ~
         phpcs: ~
         phpcsfixer: ~
-        phpcsfixer2: ~
         phplint: ~
         phpmd: ~
         phpmnd: ~
@@ -54,6 +55,7 @@ parameters:
         robo: ~
         securitychecker: ~
         shell: ~
+        tester: ~
         twigcs: ~
         xmllint: ~
         yamllint: ~
@@ -75,6 +77,7 @@ Every task has it's own default configuration. It is possible to overwrite the p
 - [Composer Script](tasks/composer_script.md)
 - [Doctrine ORM](tasks/doctrine_orm.md)
 - [Ecs EasyCodingStandard](tasks/ecs.md)
+- [ESLint](tasks/eslint.md)
 - [File size](tasks/file_size.md)
 - [Deptrac](tasks/deptrac.md)
 - [Gherkin](tasks/gherkin.md)
@@ -89,13 +92,13 @@ Every task has it's own default configuration. It is possible to overwrite the p
 - [Make](tasks/make.md)
 - [NPM script](tasks/npm_script.md)
 - [Paratest](tasks/paratest.md)
+- [Pest](tasks/pest.md)
 - [Phan](tasks/phan.md)
 - [Phing](tasks/phing.md)
 - [Php7cc](tasks/php7cc.md)
 - [PhpCpd](tasks/phpcpd.md)
 - [Phpcs](tasks/phpcs.md)
 - [PHP-CS-Fixer](tasks/phpcsfixer.md)
-- [PHP-CS-Fixer 2](tasks/phpcsfixer2.md)
 - [PHPLint](tasks/phplint.md)
 - [PhpMd](tasks/phpmd.md)
 - [PhpMnd](tasks/phpmnd.md)
@@ -110,6 +113,7 @@ Every task has it's own default configuration. It is possible to overwrite the p
 - [Robo](tasks/robo.md)
 - [Security Checker](tasks/securitychecker.md)
 - [Shell](tasks/shell.md)
+- [Tester](tasks/tester.md)
 - [TwigCs](tasks/twigcs.md)
 - [XmlLint](tasks/xmllint.md)
 - [YamlLint](tasks/yamllint.md)
@@ -121,7 +125,7 @@ For example:
 
 ```yaml
 # grumphp.yml
-parameters:
+grumphp:
     tasks:
         anytask:
             metadata:
@@ -152,6 +156,7 @@ By default the task name will be displayed.
 
 This option can be used to specify the order in which the tasks will be executed.
 The higher the priority, the sooner the task will be executed.
+All tasks with the same priority will run in parallel if parallel execution is enabled.
 
 **task**
 
@@ -164,7 +169,7 @@ This way you can configure the same task twice by using an alias with different 
 ## Creating a custom task
 
 Creating a custom task is a matter of implementing the provided `GrumPHP\Task\TaskInterface`.
-When your task is written, you have to register it to the service manager and add your task configuration to `grumphp.yaml`:
+When your task is written, you have to register it to the service manager and add your task configuration to `grumphp.yml`:
 
 ```php
 <?php
@@ -187,7 +192,7 @@ interface TaskInterface
 
 ```yaml
 # grumphp.yml
-parameters:
+grumphp:
     tasks:
         myConfigKey:
             config1: config-value
@@ -197,10 +202,10 @@ services:
         arguments:
           - '@some.required.dependency'
         tags:
-          - {name: grumphp.task, task: defaultTaskName}
+          - {name: grumphp.task, task: defaultTaskName, priority: 0}
 ```
 
-You just registered your custom task! Pretty cool right?!
+You now registered your custom task! Pretty cool right?!
 
 
 ## Testing your custom task.
@@ -221,7 +226,7 @@ Configuration of the additional task will look like this:
 
 ```yaml
 # grumphp.yml
-parameters:
+grumphp:
     tasks:
         phpcsfixer2:
             allow_risky: true

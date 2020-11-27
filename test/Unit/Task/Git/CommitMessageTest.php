@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace GrumPHPTest\Uni\Task\Git;
+namespace GrumPHPTest\Unit\Task\Git;
 
 use GrumPHP\Collection\FilesCollection;
+use GrumPHP\Git\GitRepository;
 use GrumPHP\Task\Context\ContextInterface;
 use GrumPHP\Task\Context\GitCommitMsgContext;
 use GrumPHP\Task\Context\GitPreCommitContext;
@@ -12,13 +13,27 @@ use GrumPHP\Task\Context\RunContext;
 use GrumPHP\Task\Git\CommitMessage;
 use GrumPHP\Task\TaskInterface;
 use GrumPHP\Test\Task\AbstractTaskTestCase;
+use Prophecy\Argument;
 use Prophecy\Prophecy\ObjectProphecy;
 
 class CommitMessageTest extends AbstractTaskTestCase
 {
+    /**
+     * @var ObjectProphecy & GitRepository
+     */
+    protected $repository;
+
     protected function provideTask(): TaskInterface
     {
-        return new CommitMessage();
+        $this->repository = $this->prophesize(GitRepository::class);
+        $this->repository->run('config', ['--get', 'core.commentChar'])->willReturn('#');
+        $this->repository->tryToRunWithFallback(Argument::cetera())->will(function (array $arguments) {
+            return $arguments[0]();
+        });
+
+        return new CommitMessage(
+            $this->repository->reveal()
+        );
     }
 
     public function provideConfigurableOptions(): iterable
@@ -54,7 +69,7 @@ class CommitMessageTest extends AbstractTaskTestCase
             $this->mockContext(GitPreCommitContext::class)
         ];
 
-        yield 'pre-commit-context' => [
+        yield 'commit-msg-context' => [
             true,
             $this->mockContext(GitCommitMsgContext::class)
         ];
@@ -352,6 +367,15 @@ class CommitMessageTest extends AbstractTaskTestCase
             },
             'Rule not matched: "0" /^hello((.|[\n])*)bye$/'
         ];
+        yield 'dont-enforce_capitalized_subject_fixup_without_subject' => [
+            [
+                'enforce_capitalized_subject' => true,
+            ],
+            $this->mockCommitMsgContext($this->buildMessage('', 'only body')),
+            function () {
+            },
+            'Subject should start with a capital letter.'
+        ];
     }
 
     public function providePassesOnStuff(): iterable
@@ -383,19 +407,23 @@ class CommitMessageTest extends AbstractTaskTestCase
             function () {
             }
         ];
+        yield 'allow_starts_with_custom_comment_char' => [
+            [
+                'allow_empty_message' => false,
+                'enforce_capitalized_subject' => true,
+                'enforce_no_subject_trailing_period' => false,
+                'enforce_single_lined_subject' => false,
+            ],
+            $this->mockCommitMsgContext($this->buildMessage('; some content', 'The body!')),
+            function () {
+                $this->repository->run('config', ['--get', 'core.commentChar'])->willReturn('; ');
+            }
+        ];
         yield 'dont-enforce_capitalized_subject' => [
             [
                 'enforce_capitalized_subject' => false,
             ],
             $this->mockCommitMsgContext($this->buildMessage('no capital subject')),
-            function () {
-            }
-        ];
-        yield 'dont-enforce_capitalized_subject_fixup' => [
-            [
-                'enforce_capitalized_subject' => true,
-            ],
-            $this->mockCommitMsgContext($this->buildMessage('', 'only body')),
             function () {
             }
         ];
@@ -625,6 +653,32 @@ class CommitMessageTest extends AbstractTaskTestCase
                 ],
             ],
             $this->mockCommitMsgContext($this->buildMessage('Merge branch \'x\' into')),
+            function () {
+            },
+        ];
+        yield 'skip_type_scope_conventions_on_merge_branch_gitflow' => [
+            [
+                'enforce_capitalized_subject' => false,
+                'type_scope_conventions' => [
+                    'types' => [
+                        'fix'
+                    ],
+                ],
+            ],
+            $this->mockCommitMsgContext($this->buildMessage("Merge branch 'release/x.y.z'")),
+            function () {
+            },
+        ];
+        yield 'skip_type_scope_conventions_on_merge_tag_gitflow' => [
+            [
+                'enforce_capitalized_subject' => false,
+                'type_scope_conventions' => [
+                    'types' => [
+                        'fix'
+                    ],
+                ],
+            ],
+            $this->mockCommitMsgContext($this->buildMessage("Merge tag 'x.y.z' into")),
             function () {
             },
         ];

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace GrumPHP\Formatter;
 
-use GrumPHP\Collection\ProcessArgumentsCollection;
-use GrumPHP\Process\ProcessBuilder;
 use Symfony\Component\Process\Process;
 
 class PhpcsFormatter implements ProcessFormatterInterface
 {
+    /**
+     * @var string
+     */
     protected $output = '';
 
     /**
@@ -40,7 +41,7 @@ class PhpcsFormatter implements ProcessFormatterInterface
         return $this->output;
     }
 
-    public function getSuggestedFilesFromJson(array $json): array
+    private function getSuggestedFilesFromJson(array $json): array
     {
         $suggestedFiles = [];
         if (!isset($json['totals']['fixable']) || $json['totals']['fixable'] === 0) {
@@ -61,19 +62,11 @@ class PhpcsFormatter implements ProcessFormatterInterface
         return $suggestedFiles;
     }
 
-    public function formatErrorMessage(
-        ProcessArgumentsCollection $defaultArguments,
-        ProcessBuilder $processBuilder
-    ): string {
-        if (empty($this->suggestedFiles)) {
-            return '';
-        }
-        $defaultArguments->addArgumentArray('%s', $this->suggestedFiles);
-
-        return sprintf(
-            '%sYou can fix some errors by running following command:%s',
-            PHP_EOL.PHP_EOL,
-            PHP_EOL.$processBuilder->buildProcess($defaultArguments)->getCommandLine()
-        );
+    /**
+     * @return list<string>
+     */
+    public function getSuggestedFiles(): array
+    {
+        return $this->suggestedFiles;
     }
 }

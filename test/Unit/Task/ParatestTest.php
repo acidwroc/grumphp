@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GrumPHPTest\Uni\Task;
+namespace GrumPHPTest\Unit\Task;
 
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
@@ -33,8 +33,10 @@ class ParatestTest extends AbstractExternalTaskTestCase
                 'configuration' => null,
                 'always_execute' => false,
                 'runner' => null,
-                'coverage-xml' => null,
+                'coverage-clover' => null,
                 'coverage-html' => null,
+                'coverage-php' => null,
+                'coverage-xml' => null,
                 'log-junit' => null,
                 'testsuite' => null,
                 'verbose' => false,
@@ -146,14 +148,14 @@ class ParatestTest extends AbstractExternalTaskTestCase
                 '--runner=WrapperRunner',
             ]
         ];
-        yield 'coverage-xml' => [
+        yield 'coverage-clover' => [
             [
-                'coverage-xml' => 'coverage.xml',
+                'coverage-clover' => 'clover.xml',
             ],
             $this->mockContext(RunContext::class, ['hello.php', 'hello2.php']),
             'paratest',
             [
-                '--coverage-xml=coverage.xml',
+                '--coverage-clover=clover.xml',
             ]
         ];
         yield 'coverage-html' => [
@@ -166,6 +168,26 @@ class ParatestTest extends AbstractExternalTaskTestCase
                 '--coverage-html=coverage.html',
             ]
         ];
+        yield 'coverage-php' => [
+            [
+                'coverage-php' => 'coverage.php',
+            ],
+            $this->mockContext(RunContext::class, ['hello.php', 'hello2.php']),
+            'paratest',
+            [
+                '--coverage-php=coverage.php',
+            ]
+        ];
+        yield 'coverage-xml' => [
+            [
+                'coverage-xml' => 'coverage.xml',
+            ],
+            $this->mockContext(RunContext::class, ['hello.php', 'hello2.php']),
+            'paratest',
+            [
+                '--coverage-xml=coverage.xml',
+            ]
+        ];
         yield 'testsuite' => [
             [
                 'testsuite' => 'testsuite',
@@ -176,7 +198,7 @@ class ParatestTest extends AbstractExternalTaskTestCase
                 '--testsuite=testsuite',
             ]
         ];
-        yield 'testsuite' => [
+        yield 'verbose' => [
             [
                 'verbose' => true,
             ],

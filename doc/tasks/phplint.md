@@ -5,14 +5,14 @@ The PHPLint task will check your source files for syntax errors.
 ***Composer***
 
 ```
-composer require --dev jakub-onderka/php-parallel-lint
+composer require --dev php-parallel-lint/php-parallel-lint
 ```
 
 ***Config***
 
 ```yaml
 # grumphp.yml
-parameters:
+grumphp:
     tasks:
         phplint:
             exclude: []

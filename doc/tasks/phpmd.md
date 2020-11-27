@@ -14,11 +14,12 @@ The task lives under the `phpmd` namespace and has following configurable parame
 
 ```yaml
 # grumphp.yml
-parameters:
+grumphp:
     tasks:
         phpmd:
             whitelist_patterns: []
             exclude: []
+            report_format: text
             ruleset: ['cleancode', 'codesize', 'naming']
             triggered_by: ['php']
 ```
@@ -40,6 +41,13 @@ whitelist_patterns:
 *Default: []*
 
 This is a list of patterns that will be ignored by phpmd. With this option you can skip directories like tests. Leave this option blank to run phpmd for every php file.
+
+**report_format**
+
+*Default: text*
+
+This sets the output [renderer](https://phpmd.org/documentation/#renderers) of phpmd.
+Available formats: ansi, text.
 
 **ruleset**
 

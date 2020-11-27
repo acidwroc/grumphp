@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GrumPHPTest\Uni\Task;
+namespace GrumPHPTest\Unit\Task;
 
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
@@ -74,7 +74,7 @@ class SecurityCheckerTest extends AbstractExternalTaskTestCase
                 $this->mockProcessBuilder('security-checker', $this->mockProcess(0));
             }
         ];
-        yield 'exitCode0' => [
+        yield 'exitCode0WhenRunAlways' => [
             [
                 'run_always' => true
             ],

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GrumPHPTest\Uni\Task;
+namespace GrumPHPTest\Unit\Task;
 
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
@@ -196,7 +196,7 @@ class InfectionTest extends AbstractExternalTaskTestCase
                 '--mutators=A,B,C'
             ]
         ];
-        yield 'mutators' => [
+        yield 'with_filtered_files' => [
             [
             ],
             $this->mockContext(GitPreCommitContext::class, ['hello.php', 'hello2.php']),

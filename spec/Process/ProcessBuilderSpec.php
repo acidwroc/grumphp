@@ -3,21 +3,21 @@
 namespace spec\GrumPHP\Process;
 
 use GrumPHP\Collection\ProcessArgumentsCollection;
-use GrumPHP\Configuration\GrumPHP;
+use GrumPHP\Configuration\Model\ProcessConfig;
 use GrumPHP\IO\IOInterface;
 use GrumPHP\Locator\ExternalCommand;
 use GrumPHP\Process\ProcessBuilder;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 use Symfony\Component\Process\Process;
-use GrumPHP\Process\ProcessUtils;
 
 class ProcessBuilderSpec extends ObjectBehavior
 {
-    function let(GrumPHP $config, ExternalCommand $externalCommandLocator, IOInterface $io)
+    function let(ExternalCommand $externalCommandLocator, IOInterface $io, ProcessConfig $config)
     {
-        $this->beConstructedWith($config, $externalCommandLocator, $io);
-        $config->getProcessTimeout()->willReturn(60);
+        $this->beConstructedWith($externalCommandLocator, $io, $config);
+        $config->getTimeout()->willReturn(60);
     }
 
     function it_is_initializable()
@@ -58,11 +58,11 @@ class ProcessBuilderSpec extends ObjectBehavior
         $process->getCommandLine()->shouldBeQuoted('/usr/bin/grumphp');
     }
 
-    function it_should_be_possible_to_configure_the_process_timeout(GrumPHP $config, IOInterface $io)
+    function it_should_be_possible_to_configure_the_process_timeout(ProcessConfig $config, IOInterface $io)
     {
         $io->isVeryVerbose()->willReturn(false);
 
-        $config->getProcessTimeout()->willReturn(120);
+        $config->getTimeout()->willReturn(120);
 
         $arguments = new ProcessArgumentsCollection(['/usr/bin/grumphp']);
         $process = $this->buildProcess($arguments);
@@ -74,7 +74,7 @@ class ProcessBuilderSpec extends ObjectBehavior
         $io->isVeryVerbose()->willReturn(true);
 
         $command = '/usr/bin/grumphp';
-        $io->write([PHP_EOL . 'Command: ' . ProcessUtils::escapeArgument($command)], true)->shouldBeCalled();
+        $io->write(Argument::withEveryEntry(Argument::containingString($command)), true)->shouldBeCalled();
 
         $arguments = new ProcessArgumentsCollection([$command]);
         $this->buildProcess($arguments);

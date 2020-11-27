@@ -31,7 +31,7 @@ services:
         arguments:
             - '@filesystem'
         tags:
-            - {name: grumphp.task, task: clover_coverage}
+            - {name: grumphp.task, task: clover_coverage, priority: -100}
 
     GrumPHP\Task\Codeception:
         arguments:
@@ -106,6 +106,8 @@ services:
             - {name: grumphp.task, task: git_blacklist}
 
     GrumPHP\Task\Git\CommitMessage:
+        arguments:
+            - '@GrumPHP\Git\GitRepository'
         tags:
             - {name: grumphp.task, task: git_commit_message}
 
@@ -114,6 +116,13 @@ services:
             - '@GrumPHP\Git\GitRepository'
         tags:
             - {name: grumphp.task, task: git_branch_name}
+
+    GrumPHP\Task\ESLint:
+        arguments:
+            - '@process_builder'
+            - '@formatter.raw_process'
+        tags:
+            - {name: grumphp.task, task: eslint}
 
     GrumPHP\Task\FileSize:
         tags:
@@ -174,6 +183,13 @@ services:
         tags:
             - {name: grumphp.task, task: paratest}
 
+    GrumPHP\Task\Pest:
+        arguments:
+            - '@process_builder'
+            - '@formatter.raw_process'
+        tags:
+            - {name: grumphp.task, task: pest}
+
     GrumPHP\Task\Phan:
         arguments:
             - '@process_builder'
@@ -212,17 +228,10 @@ services:
     GrumPHP\Task\PhpCsFixer:
         arguments:
           - '@process_builder'
-          - '@async_process_runner'
           - '@formatter.phpcsfixer'
         tags:
           - {name: grumphp.task, task: phpcsfixer}
-
-    GrumPHP\Task\PhpCsFixerV2:
-        arguments:
-          - '@process_builder'
-          - '@formatter.phpcsfixer'
-        tags:
-          - {name: grumphp.task, task: phpcsfixer2}
+          - {name: grumphp.task, task: phpcsfixer2, aliasFor: phpcsfixer} # for old times-sake
 
     GrumPHP\Task\PhpLint:
         arguments:
@@ -319,6 +328,14 @@ services:
             - '@formatter.raw_process'
         tags:
             - {name: grumphp.task, task: shell}
+
+    GrumPHP\Task\Tester:
+        class:
+        arguments:
+            - '@process_builder'
+            - '@formatter.raw_process'
+        tags:
+            - {name: grumphp.task, task: tester}
 
     GrumPHP\Task\TwigCs:
         arguments:

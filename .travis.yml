@@ -1,15 +1,15 @@
 language: php
 
 php:
-  - 7.2
   - 7.3
-  - 7.4snapshot
+  - 7.4
   - nightly
 
 env:
   matrix:
-    -
-    - DEPENDENCIES=--prefer-lowest
+    - COMPOSER_VERSION=1
+    - COMPOSER_VERSION=2
+    - COMPOSER_VERSION=1 DEPENDENCIES=--prefer-lowest
 
 cache:
   directories:
@@ -21,15 +21,22 @@ matrix:
     - php: nightly
 
 before_install:
-  - phpenv config-rm xdebug.ini
-  - alias composer=composer\ --no-interaction && composer selfupdate
-  - composer global require hirak/prestissimo
+  - phpenv config-rm xdebug.ini || true
+  - alias composer=composer\ --no-interaction && composer selfupdate --$COMPOSER_VERSION
+  - |
+      if [ $COMPOSER_VERSION -eq 1 ]; then
+        composer global require hirak/prestissimo
+      fi;
+  - |
+    if [ "$TRAVIS_PHP_VERSION" = "nightly" ]; then
+      export DEPENDENCIES="$DEPENDENCIES --ignore-platform-reqs"
+    fi;
 
 install:
   - travis_retry composer update --no-progress --profile --no-scripts --no-suggest $DEPENDENCIES
 
 script:
-   - bin/grumphp run
+   - bin/grumphp run --no-interaction
 
 notifications:
   irc:

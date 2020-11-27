@@ -10,10 +10,7 @@ services:
         configurator: ['@GrumPHP\Console\ApplicationConfigurator', 'configure']
         public: true
 
-    GrumPHP\Console\ApplicationConfigurator:
-        arguments:
-            - '@config'
-            - !tagged console.helper
+    GrumPHP\Console\ApplicationConfigurator: ~
 
     #
     # Commands
@@ -27,14 +24,18 @@ services:
             - { name: 'console.command' }
     GrumPHP\Console\Command\RunCommand:
         arguments:
-            - '@config'
-            - '@locator.registered_files'
+            - '@GrumPHP\Collection\TestSuiteCollection'
+            - '@GrumPHP\Locator\StdInFiles'
+            - '@GrumPHP\Locator\RegisteredFiles'
+            - '@GrumPHP\Runner\TaskRunner'
         tags:
             - { name: 'console.command' }
     GrumPHP\Console\Command\Git\CommitMsgCommand:
         arguments:
-            - '@config'
-            - '@locator.changed_files'
+            - '@GrumPHP\Collection\TestSuiteCollection'
+            - '@GrumPHP\Locator\StdInFiles'
+            - '@GrumPHP\Locator\ChangedFiles'
+            - '@GrumPHP\Runner\TaskRunner'
             - '@grumphp.util.filesystem'
             - '@GrumPHP\Util\Paths'
         tags:
@@ -47,7 +48,7 @@ services:
             - { name: 'console.command' }
     GrumPHP\Console\Command\Git\InitCommand:
         arguments:
-            - '@config'
+            - '@GrumPHP\Configuration\Model\HooksConfig'
             - '@grumphp.util.filesystem'
             - '@process_builder'
             - '@GrumPHP\Util\Paths'
@@ -55,24 +56,20 @@ services:
             - { name: 'console.command' }
     GrumPHP\Console\Command\Git\PreCommitCommand:
         arguments:
-            - '@config'
-            - '@locator.changed_files'
+            - '@GrumPHP\Collection\TestSuiteCollection'
+            - '@GrumPHP\Locator\StdInFiles'
+            - '@GrumPHP\Locator\ChangedFiles'
+            - '@GrumPHP\Runner\TaskRunner'
         tags:
             - { name: 'console.command' }
     GrumPHP\Console\Command\Git\PrepareCommitMsgCommand:
         arguments:
-            - '@config'
+            - '@GrumPHP\Util\Paths'
+            - '@grumphp.util.filesystem'
+            - '%issues%'
         tags:
             - { name: 'console.command' }
 
-    #
-    # Helper
-    #
-    GrumPHP\Console\Helper\TaskRunnerHelper:
-        arguments:
-            - '@config'
-            - '@task_runner'
-            - '@Symfony\Component\EventDispatcher\EventDispatcher'
-            - '@GrumPHP\Locator\AsciiLocator'
-        tags:
-            - { name: 'console.helper' }
+    # This one is loaded through the TestSuiteCompilerPass
+    GrumPHP\Collection\TestSuiteCollection:
+        synthetic: true

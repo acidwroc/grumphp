@@ -6,9 +6,12 @@ use GrumPHP\Exception\RuntimeException;
 use GrumPHP\IO\ConsoleIO;
 use GrumPHP\IO\IOInterface;
 use PhpSpec\ObjectBehavior;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\ConsoleSectionOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\StyleInterface;
 
 class ConsoleIOSpec extends ObjectBehavior
 {
@@ -78,6 +81,12 @@ class ConsoleIOSpec extends ObjectBehavior
         $this->writeError(['test']);
     }
 
+    function it_doesnt_read_empty_input()
+    {
+        $handle = $this->mockHandle('');
+        $this->readCommandInput($handle)->shouldBe('');
+    }
+
     function it_reads_command_input()
     {
         $handle = $this->mockHandle('input');
@@ -114,9 +123,29 @@ EOD;
         $this->shouldThrow(RuntimeException::class)->duringReadCommandInput('string');
     }
 
+    public function it_provides_sections(): void
+    {
+        $this->beConstructedWith(new ArrayInput([]), new ConsoleOutput());
+        $this->section()->shouldHaveType(ConsoleSectionOutput::class);
+    }
+
+    public function it_can_provide_style(): void
+    {
+        $this->beConstructedWith(new ArrayInput([]), new ConsoleOutput());
+        $this->style()->shouldHaveType(StyleInterface::class);
+    }
+
+    public function it_can_colorize_messages(): void
+    {
+        $this->colorize(['message1', 'message2'], 'red')->shouldBe([
+            '<fg=red>message1</fg=red>',
+            '<fg=red>message2</fg=red>',
+        ]);
+    }
+
     private function mockHandle($content)
     {
-        $handle = fopen('php://memory', 'a');
+        $handle = tmpfile();
         fwrite($handle, $content);
         rewind($handle);
 

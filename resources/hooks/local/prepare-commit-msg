@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # get current branch
-branchName=$(git rev-parse --abbrev-ref HEAD)
+BRANCH_NAME=$(git branch --show-current)
 
-# search jira issue id in a pattern such a "feature/ABC-123-description"
-jiraId=$(echo "$branchName" | sed -nr 's,[a-z]+/([A-Z]+-[0-9]+)-.+,\1,p')
+# get location of commit message file
+COMMIT_MSG_FILE=$1
 
-# only prepare commit message if pattern matched and jiraId was found
-if [[ -n $jiraId ]]; then
- # $1 is the name of the file containing the commit message
- sed -i.bak -e "1s/^/$jiraId: /" "$1"
-fi
+# Grumphp env vars
+$(ENV)
+export GRUMPHP_GIT_WORKING_DIR=$(git rev-parse --show-toplevel)
+
+# Run GrumPHP
+(cd "${HOOK_EXEC_PATH}" && printf "%s\n" "${DIFF}" | $(EXEC_GRUMPHP_COMMAND) $(HOOK_COMMAND) "--branch-name=$BRANCH_NAME" "$COMMIT_MSG_FILE")

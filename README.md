@@ -1,11 +1,9 @@
 [![Travis](https://img.shields.io/travis/phpro/grumphp/master.svg)](http://travis-ci.org/phpro/grumphp)
-[![Insight](https://img.shields.io/sensiolabs/i/9a345021-c8a1-4f48-948a-d15de51d9909.svg)](https://insight.sensiolabs.com/projects/9a345021-c8a1-4f48-948a-d15de51d9909)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/ttlbau2sjg36ep01/branch/master?svg=true)](https://ci.appveyor.com/project/veewee/grumphp/branch/master)
 [![Installs](https://img.shields.io/packagist/dt/phpro/grumphp.svg)](https://packagist.org/packages/phpro/grumphp/stats)
 [![Packagist](https://img.shields.io/packagist/v/phpro/grumphp.svg)](https://packagist.org/packages/phpro/grumphp)
 
 [![Twitter](https://img.shields.io/badge/Twitter-%40grumphp-blue.svg)](https://twitter.com/intent/user?screen_name=grumphp)
-[![Freenode](https://img.shields.io/badge/Freenode-%23grumphp-blue.svg)](http://webchat.freenode.net?channels=%23grumphp&uio=d4)
 [![Join the chat at https://gitter.im/phpro/grumphp](https://badges.gitter.im/phpro/grumphp.svg)](https://gitter.im/phpro/grumphp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # GrumPHP
@@ -58,7 +56,8 @@ You will see following message in the composer logs:
 GrumPHP will never push you into using a specific task. You can choose the tasks that fit your needs, and activate or
 deactivate any task in no time! See the `suggest` section in [composer.json](https://github.com/phpro/grumphp/blob/master/composer.json#L37).
 
-Note: GrumPHP will overwrite existing hooks unless you run `composer install` with `--no-plugins` or `--no-scripts`. Be sure to backup your hooks before you try to install GrumPHP.
+Note: GrumPHP will overwrite existing hooks unless you run `composer install` with `--no-plugins` or `--no-scripts`.
+We do create a backup of your git hook, but it's best to make sure you also have a backup of your custom hooks before you try to install GrumPHP.
 
 Having trouble installing GrumPHP? Find out how to:
 
@@ -72,22 +71,31 @@ You can specify a custom config filename and location in `composer.json` or in t
 
 ```yaml
 # grumphp.yml
-parameters:
+grumphp:
     hooks_dir: ~
     hooks_preset: local
     git_hook_variables:
          VAGRANT_HOST_DIR: .
          VAGRANT_PROJECT_DIR: /var/www
          EXEC_GRUMPHP_COMMAND: exec
+         ENV: {}
     stop_on_failure: false
     ignore_unstaged_changes: false
     hide_circumvention_tip: false
-    process_async_limit: 10
-    process_async_wait: 1000
     process_timeout: 60
     ascii:
         failed: grumphp-grumpy.txt
         succeeded: grumphp-happy.txt
+    parallel:
+        enabled: true
+        max_workers: 32
+    fixer:
+        enabled: true
+        fix_by_default: false
+    environment:
+        files: []
+        variables: {}
+        paths: []
     tasks: {}
     testsuites: []
     extensions: []
@@ -99,7 +107,7 @@ Details of the configuration are broken down into the following sections.
 - [Tasks](doc/tasks.md) &ndash; External tasks performing code validation and their respective configurations.
 - [TestSuites](doc/testsuites.md)
 - [Extensions](doc/extensions.md)
-- [Events](doc/events.md)
+- [Extending the TaskRunner](doc/runner.md)
 - [Conventions checker](doc/conventions.md)
 
 ## Commands
