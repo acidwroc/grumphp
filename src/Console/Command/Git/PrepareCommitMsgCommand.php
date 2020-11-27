@@ -97,7 +97,7 @@ class PrepareCommitMsgCommand extends Command
         $pattern = $this->config['pattern'];
 
         if (preg_match("/$pattern/", $branchName, $matches)) {
-            return $matches[0];
+            return $matches[1];
         }
 
         return null;
