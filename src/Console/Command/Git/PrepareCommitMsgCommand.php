@@ -19,6 +19,8 @@ class PrepareCommitMsgCommand extends Command
 {
     const COMMAND_NAME = 'git:prepare-commit-msg';
 
+    const EXIT_CODE_OK = 0;
+
     private Paths $paths;
 
     private Filesystem $filesystem;
@@ -87,7 +89,7 @@ class PrepareCommitMsgCommand extends Command
             $this->overwriteCommitMsg($commitMsgPath, $outputPath);
         }
 
-        return self::SUCCESS;
+        return self::EXIT_CODE_OK;
     }
 
     private function getJiraIssue(string $branchName): ?string
